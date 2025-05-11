@@ -13,6 +13,7 @@ export type TabType =
   | 'service-status'
   | 'connection'
   | 'debug'
+  | 'integrations'
   | 'event-logs'
   | 'update'
   | 'task-manager'
@@ -77,6 +78,7 @@ export const TAB_LABELS: Record<TabType, string> = {
   'service-status': 'Service Status',
   connection: 'Connections',
   debug: 'Debug',
+  integrations: 'Integrations',
   'event-logs': 'Event Logs',
   update: 'Updates',
   'task-manager': 'Task Manager',

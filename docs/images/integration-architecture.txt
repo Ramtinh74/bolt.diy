@@ -1,0 +1,51 @@
+```
++------------------+       +------------------+       +------------------+
+|                  |       |                  |       |                  |
+|  Bolt.DIY App    |------>|    Supabase      |------>|     Stripe      |
+|                  |       |                  |       |                  |
++------------------+       +------------------+       +------------------+
+        |                          |                          |
+        |                          |                          |
+        v                          v                          v
++------------------+       +------------------+       +------------------+
+|                  |       |                  |       |                  |
+|  Authentication  |       |    Database      |       |   Subscription   |
+|                  |       |                  |       |                  |
++------------------+       +------------------+       +------------------+
+        |                          |                          |
+        |                          |                          |
+        v                          v                          v
++------------------+       +------------------+       +------------------+
+|                  |       |                  |       |                  |
+|  User Profiles   |       |   Usage Logs     |       |  Payment Portal  |
+|                  |       |                  |       |                  |
++------------------+       +------------------+       +------------------+
+```
+
+## Data Flow
+
+1. User authenticates via Supabase Auth
+2. User profile is created/retrieved from Supabase DB
+3. Usage is tracked in Supabase DB
+4. Subscription is managed via Stripe
+5. Stripe webhooks update user subscription status in Supabase
+
+## Database Schema
+
+### Profiles Table
+- id (UUID, PK)
+- email (TEXT)
+- username (TEXT)
+- subscription_tier (TEXT)
+- subscription_status (TEXT)
+- stripe_customer_id (TEXT)
+- usage_credits (INTEGER)
+- usage_limit (INTEGER)
+
+### Usage Logs Table
+- id (UUID, PK)
+- user_id (UUID, FK)
+- action_type (TEXT)
+- credits_used (INTEGER)
+- metadata (JSONB)
+- created_at (TIMESTAMP)

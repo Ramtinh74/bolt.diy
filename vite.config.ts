@@ -73,6 +73,15 @@ const gitInfo = getGitInfo();
 
 export default defineConfig((config) => {
   return {
+    server: {
+      port: 12000,
+      host: '0.0.0.0',
+      cors: true,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+      },
+      allowedHosts: ['work-1-gzhncfbcxzdrrhdy.prod-runtime.all-hands.dev', 'work-2-gzhncfbcxzdrrhdy.prod-runtime.all-hands.dev'],
+    },
     define: {
       __COMMIT_HASH: JSON.stringify(gitInfo.commitHash),
       __GIT_BRANCH: JSON.stringify(gitInfo.branch),

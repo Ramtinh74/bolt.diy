@@ -11,6 +11,7 @@ import type { ContextAnnotation, ProgressAnnotation } from '~/types/context';
 import { WORK_DIR } from '~/utils/constants';
 import { createSummary } from '~/lib/.server/llm/create-summary';
 import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
+import { checkAndRecordUsage } from '~/lib/middleware/usage-middleware';
 
 export async function action(args: ActionFunctionArgs) {
   return chatAction(args);
@@ -37,7 +38,14 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
-  const { messages, files, promptId, contextOptimization, supabase } = await request.json<{
+  const { 
+    messages, 
+    files, 
+    promptId, 
+    contextOptimization, 
+    supabase,
+    auth
+  } = await request.json<{
     messages: Messages;
     files: any;
     promptId?: string;
@@ -50,7 +58,38 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         supabaseUrl?: string;
       };
     };
+    auth?: {
+      userId: string;
+      stripeKey: string;
+      supabaseKey: string;
+    };
   }>();
+  
+  // Check usage if auth credentials are provided
+  if (auth && auth.userId && auth.stripeKey && supabase?.credentials?.supabaseUrl) {
+    const { allowed, error } = await checkAndRecordUsage({
+      userId: auth.userId,
+      stripeKey: auth.stripeKey,
+      supabaseUrl: supabase.credentials.supabaseUrl,
+      supabaseKey: auth.supabaseKey,
+      actionType: 'chat',
+      creditsRequired: 1, // Adjust based on your pricing model
+      metadata: {
+        messageCount: messages.length,
+        promptId,
+      }
+    });
+    
+    if (!allowed) {
+      return new Response(
+        JSON.stringify({ error: error || 'Insufficient credits', type: 'usage_limit_exceeded' }),
+        { 
+          status: 402, 
+          headers: { 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+  }
 
   const cookieHeader = request.headers.get('Cookie');
   const apiKeys = JSON.parse(parseCookies(cookieHeader || '').apiKeys || '{}');
